@@ -3,6 +3,7 @@ package com.extendedclip.deluxemenus.menu;
 import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.menu.options.MenuOptions;
 import com.extendedclip.deluxemenus.utils.StringUtils;
+import com.extendedclip.deluxemenus.utils.VersionHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -295,6 +296,11 @@ public class MenuHolder implements InventoryHolder {
                             }
                         }
 
+                        final int maxSupportedAmount = VersionHelper.HAS_DATA_COMPONENTS ? 99 : 64;
+                        if (amt > maxSupportedAmount) {
+                            amt = maxSupportedAmount;
+                        }
+
                         ItemMeta meta = i.getItemMeta();
 
                         if (item.options().displayNameHasPlaceholders() && item.options().displayName().isPresent()) {
@@ -303,6 +309,14 @@ public class MenuHolder implements InventoryHolder {
 
                         if (item.options().loreHasPlaceholders()) {
                             meta.setLore(item.getMenuItemLore(getHolder(), item.options().lore()));
+                        }
+
+                        if (VersionHelper.HAS_DATA_COMPONENTS) {
+                            if (amt > meta.getMaxStackSize()) {
+                                meta.setMaxStackSize(amt);
+                            }
+                        } else if (amt > i.getMaxStackSize()) {
+                            amt = i.getMaxStackSize();
                         }
 
                         i.setItemMeta(meta);
