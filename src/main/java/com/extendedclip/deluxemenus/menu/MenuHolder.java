@@ -302,6 +302,9 @@ public class MenuHolder implements InventoryHolder {
                         }
 
                         ItemMeta meta = i.getItemMeta();
+                        if (meta == null) {
+                            continue;
+                        }
 
                         if (item.options().displayNameHasPlaceholders() && item.options().displayName().isPresent()) {
                             meta.setDisplayName(StringUtils.color(setPlaceholdersAndArguments(item.options().displayName().get())));
@@ -311,12 +314,25 @@ public class MenuHolder implements InventoryHolder {
                             meta.setLore(item.getMenuItemLore(getHolder(), item.options().lore()));
                         }
 
+                        int maxStackSize = i.getMaxStackSize();
+
                         if (VersionHelper.HAS_DATA_COMPONENTS) {
-                            if (amt > meta.getMaxStackSize()) {
-                                meta.setMaxStackSize(amt);
+                            if (meta.hasMaxStackSize()) {
+                                maxStackSize = meta.getMaxStackSize();
                             }
-                        } else if (amt > i.getMaxStackSize()) {
-                            amt = i.getMaxStackSize();
+
+                            if (amt > maxStackSize) {
+                                meta.setMaxStackSize(amt);
+                                if (meta.hasMaxStackSize()) {
+                                    maxStackSize = meta.getMaxStackSize();
+                                } else {
+                                    maxStackSize = i.getMaxStackSize();
+                                }
+                            }
+                        }
+
+                        if (amt > maxStackSize) {
+                            amt = maxStackSize;
                         }
 
                         i.setItemMeta(meta);
