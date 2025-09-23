@@ -190,6 +190,10 @@ public class DeluxeMenus extends JavaPlugin {
         return menuConfig;
     }
 
+    public GeneralConfig generalConfig() {
+        return generalConfig;
+    }
+
     public VaultHook getVault() {
         return vaultHook;
     }
