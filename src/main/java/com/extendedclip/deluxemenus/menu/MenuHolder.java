@@ -3,6 +3,7 @@ package com.extendedclip.deluxemenus.menu;
 import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.menu.options.MenuOptions;
 import com.extendedclip.deluxemenus.utils.StringUtils;
+import com.extendedclip.deluxemenus.utils.VersionHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -295,7 +296,15 @@ public class MenuHolder implements InventoryHolder {
                             }
                         }
 
+                        final int maxSupportedAmount = VersionHelper.HAS_DATA_COMPONENTS ? 99 : 64;
+                        if (amt > maxSupportedAmount) {
+                            amt = maxSupportedAmount;
+                        }
+
                         ItemMeta meta = i.getItemMeta();
+                        if (meta == null) {
+                            continue;
+                        }
 
                         if (item.options().displayNameHasPlaceholders() && item.options().displayName().isPresent()) {
                             meta.setDisplayName(StringUtils.color(setPlaceholdersAndArguments(item.options().displayName().get())));
@@ -303,6 +312,27 @@ public class MenuHolder implements InventoryHolder {
 
                         if (item.options().loreHasPlaceholders()) {
                             meta.setLore(item.getMenuItemLore(getHolder(), item.options().lore()));
+                        }
+
+                        int maxStackSize = i.getMaxStackSize();
+
+                        if (VersionHelper.HAS_DATA_COMPONENTS) {
+                            if (meta.hasMaxStackSize()) {
+                                maxStackSize = meta.getMaxStackSize();
+                            }
+
+                            if (amt > maxStackSize) {
+                                meta.setMaxStackSize(amt);
+                                if (meta.hasMaxStackSize()) {
+                                    maxStackSize = meta.getMaxStackSize();
+                                } else {
+                                    maxStackSize = i.getMaxStackSize();
+                                }
+                            }
+                        }
+
+                        if (amt > maxStackSize) {
+                            amt = maxStackSize;
                         }
 
                         i.setItemMeta(meta);

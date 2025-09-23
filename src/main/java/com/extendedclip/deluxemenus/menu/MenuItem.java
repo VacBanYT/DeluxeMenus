@@ -245,8 +245,23 @@ public class MenuItem {
             }
         }
 
-        if (amount > 64) {
-            amount = 64;
+        final int maxSupportedAmount = VersionHelper.HAS_DATA_COMPONENTS ? 99 : 64;
+        if (amount > maxSupportedAmount) {
+            amount = maxSupportedAmount;
+        }
+
+        if (amount > itemStack.getMaxStackSize()) {
+            if (VersionHelper.HAS_DATA_COMPONENTS) {
+                final ItemMeta amountMeta = itemStack.getItemMeta();
+                if (amountMeta != null) {
+                    amountMeta.setMaxStackSize(amount);
+                    itemStack.setItemMeta(amountMeta);
+                } else {
+                    amount = itemStack.getMaxStackSize();
+                }
+            } else {
+                amount = itemStack.getMaxStackSize();
+            }
         }
 
         itemStack.setAmount(amount);

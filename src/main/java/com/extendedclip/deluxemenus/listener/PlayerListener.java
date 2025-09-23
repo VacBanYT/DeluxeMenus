@@ -26,10 +26,10 @@ import java.util.concurrent.TimeUnit;
 
 public class PlayerListener extends Listener {
 
-    private final Cache<UUID, Long> cache = CacheBuilder.newBuilder().expireAfterWrite(75, TimeUnit.MILLISECONDS).build();
+    private final Cache<UUID, Long> cache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MILLISECONDS).build();
 
     // This is so dumb. Mojang fix your shit.
-    private final Cache<UUID, Long> shiftCache = CacheBuilder.newBuilder().expireAfterWrite(200, TimeUnit.MILLISECONDS).build();
+    private final Cache<UUID, Long> shiftCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MILLISECONDS).build();
 
     public PlayerListener(@NotNull final DeluxeMenus plugin) {
         super(plugin);

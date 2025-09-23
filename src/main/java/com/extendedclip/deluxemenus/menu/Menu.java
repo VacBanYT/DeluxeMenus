@@ -274,11 +274,13 @@ public class Menu {
         }
 
         DeluxeMenusPreOpenMenuEvent preOpenEvent = new DeluxeMenusPreOpenMenuEvent(viewer);
-    Bukkit.getPluginManager().callEvent(preOpenEvent);
+        Bukkit.getPluginManager().callEvent(preOpenEvent);
 
-    if (preOpenEvent.isCancelled()) return;
+        if (preOpenEvent.isCancelled()) {
+            return;
+        }
 
-    final MenuHolder holder = new MenuHolder(plugin, viewer);
+        final MenuHolder holder = new MenuHolder(plugin, viewer);
         if (placeholderPlayer != null) {
             holder.setPlaceholderPlayer(placeholderPlayer);
         }
@@ -294,14 +296,11 @@ public class Menu {
             return;
         }
 
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-
+        Runnable loadAndOpen = () -> {
             Set<MenuItem> activeItems = new HashSet<>();
 
             for (Entry<Integer, TreeMap<Integer, MenuItem>> entry : items.entrySet()) {
-
                 for (MenuItem item : entry.getValue().values()) {
-
                     int slot = item.options().slot();
 
                     if (slot >= this.options.size()) {
@@ -315,14 +314,11 @@ public class Menu {
                     }
 
                     if (item.options().viewRequirements().isPresent()) {
-
                         if (item.options().viewRequirements().get().evaluate(holder)) {
-
                             activeItems.add(item);
                             break;
                         }
                     } else {
-
                         activeItems.add(item);
                         break;
                     }
@@ -353,7 +349,6 @@ public class Menu {
             boolean update = false;
 
             for (MenuItem item : activeItems) {
-
                 ItemStack iStack = item.getItemStack(holder);
 
                 if (iStack == null) {
@@ -378,13 +373,13 @@ public class Menu {
                     update = true;
                 }
 
-                inventory.setItem(item.options().slot(), iStack);
+                inventory.setItem(slot, iStack);
             }
 
             final boolean updatePlaceholders = update;
 
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                if(options.refresh()) {
+            Runnable openInventoryTask = () -> {
+                if (options.refresh()) {
                     holder.startRefreshTask();
                 }
 
@@ -395,17 +390,29 @@ public class Menu {
                 viewer.openInventory(inventory);
                 menuHolders.add(holder);
 
-        if (updatePlaceholders) {
-          holder.startUpdatePlaceholdersTask();
-        }
-      });
+                if (updatePlaceholders) {
+                    holder.startUpdatePlaceholdersTask();
+                }
 
-      Bukkit.getScheduler().runTask(plugin, () -> {
-        DeluxeMenusOpenMenuEvent openEvent = new DeluxeMenusOpenMenuEvent(viewer, holder);
-        Bukkit.getPluginManager().callEvent(openEvent);
-      });
-    });
-  }
+                DeluxeMenusOpenMenuEvent openEvent = new DeluxeMenusOpenMenuEvent(viewer, holder);
+                Bukkit.getPluginManager().callEvent(openEvent);
+            };
+
+            if (Bukkit.isPrimaryThread()) {
+                openInventoryTask.run();
+                return;
+            }
+
+            Bukkit.getScheduler().runTask(plugin, openInventoryTask);
+        };
+
+        if (plugin.generalConfig().openMenusSynchronously() && Bukkit.isPrimaryThread()) {
+            loadAndOpen.run();
+            return;
+        }
+
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, loadAndOpen);
+    }
 
     public void refreshForAll() {
         menuHolders.stream().filter(menuHolder -> menuHolder.getMenuName().equalsIgnoreCase(options.name())).forEach(MenuHolder::refreshMenu);
